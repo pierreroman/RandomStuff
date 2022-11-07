@@ -16,11 +16,17 @@ Import-Module Az.ResourceGraph
 
 $statusGood = $true
 
+#$GraphSearchQuery = "Resources
+#    | where type =~ 'Microsoft.Compute/virtualMachines'
+#    | where properties.osProfile.computerName =~ '$computername'
+#    | join (ResourceContainers | where type=='microsoft.resources/subscriptions' | project SubName=name, subscriptionId) on subscriptionId
+#    | project VMName = name, CompName = properties.osProfile.computerName, RGName = resourceGroup, SubName, SubID = subscriptionId"
+
 $GraphSearchQuery = "Resources
-    | where type =~ 'Microsoft.Compute/virtualMachines'
-    | where properties.osProfile.computerName =~ '$computername'
-    | join (ResourceContainers | where type=='microsoft.resources/subscriptions' | project SubName=name, subscriptionId) on subscriptionId
-    | project VMName = name, CompName = properties.osProfile.computerName, RGName = resourceGroup, SubName, SubID = subscriptionId"
+| where type == 'microsoft.compute/virtualmachines'
+| project name, properties.storageProfile.osDisk.osType, properties.extended.instanceView.powerState.code, resourceGroup"
+
+Write-Host $GraphSearchQuery
 
 try {
     $VMresource = Search-AzGraph -Query $GraphSearchQuery
@@ -29,6 +35,8 @@ catch {
     $statusGood = $false
     Write-Error "Failure running Search-AzGraph, $_"
 }
+
+Write-Host $VMresource
 
 if($statusGood -and ($null -ne $VMresource))
 {
@@ -48,7 +56,7 @@ else
 }
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.
-Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-    StatusCode = $status
-    Body = $ValueJSON
-})
+#Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+#    StatusCode = $status
+#    Body = $ValueJSON
+#})
